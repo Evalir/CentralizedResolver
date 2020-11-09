@@ -40,16 +40,17 @@ contract CentralizedResolver is IArbitrator {
     // List of all disputes created in the Centralized Resolver
     Dispute[] internal disputes;
 
+    modifier onlyDictator {
+      require(msg.sender == dictator);
+      _;
+    }
+
     event NewDispute(uint256 indexed disputeId, address indexed subject, bytes metadata);
     event EvidencePeriodClosed(uint256 indexed disputeId);
     event EvidenceSubmitted(uint256 disputeId, address indexed submitter, bytes evidence);
     event Dictated(uint256 indexed disputeId, uint8 finalRuling);
     event Ruled(uint256 indexed disputeId, uint8 finalRuling);
 
-    modifier onlyDictator {
-      require(msg.sender == dictator);
-      _;
-    }
 
     constructor(address _dictator) public {
       console.log("Deploying CentralizedResolver with dictator: ", _dictator);
