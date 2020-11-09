@@ -37,8 +37,6 @@ contract CentralizedResolver is IArbitrator {
     address dictator;
     // Current CentralizedResolver configuration
     DictatorConfig dictatorConfig;
-
-
     // List of all disputes created in the Centralized Resolver
     Dispute[] internal disputes;
 
@@ -58,7 +56,8 @@ contract CentralizedResolver is IArbitrator {
       dictator = _dictator;
     }
 
-    // external functions
+    // External functions
+
     /**
     * @notice Dictate a ruling over the selected dispute, if possible
     * @param _disputeId id of the dispute to dictate on
