@@ -7,7 +7,7 @@ import "./lib/IERC20.sol";
 
 contract CentralizedResolver is IArbitrator {
     string private constant ERROR_EVIDENCE_PERIOD_CLOSED = "Evidence: Period closed";
-    string private constant ERROR_NOT_ADJUDICATING = "Disputes: a dictator can only rule when in adjudication";
+    string private constant ERROR_NOT_ADJUDICATING = "Disputes: A dictator can only rule when in adjudication";
     string private constant ERROR_NOT_SUBJECT = "Evidence: Only Subject can submit evidence";
     string private constant ERROR_INVALID_RULING_OPTIONS = "Disputes: Too many options";
 
@@ -52,9 +52,11 @@ contract CentralizedResolver is IArbitrator {
     event Ruled(uint256 indexed disputeId, uint8 finalRuling);
 
 
-    constructor(address _dictator) public {
+    constructor(address _dictator, IERC20 _feeToken, uint256 _feeAmount) public {
       console.log("Deploying CentralizedResolver with dictator: ", _dictator);
       dictator = _dictator;
+      dictatorConfig.feeToken = _feeToken;
+      dictatorConfig.feeAmount = _feeAmount;
     }
 
     // External functions
