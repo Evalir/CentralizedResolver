@@ -64,7 +64,7 @@ contract CentralizedResolver is IArbitrator {
     /**
     * @notice Dictate a ruling over the selected dispute, if possible
     * @param _disputeId id of the dispute to dictate on
-    * @param _finalRuling Desired ruling 
+    * @param _finalRuling Desired ruling
     */
     function dictate(uint256 _disputeId, uint8 _finalRuling) external onlyDictator {
       Dispute storage dispute = disputes[_disputeId];
@@ -75,7 +75,7 @@ contract CentralizedResolver is IArbitrator {
     }
 
 
-    // IArbitrable functions
+    // IArbitrator functions
 
     /**
     * @dev Create a dispute over the Arbitrable sender with a number of possible rulings
