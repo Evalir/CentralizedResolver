@@ -8,8 +8,9 @@ import "./lib/IERC20.sol";
 contract CentralizedResolver is IArbitrator {
     string private constant ERROR_EVIDENCE_PERIOD_CLOSED = "Evidence: Period closed";
     string private constant ERROR_NOT_ADJUDICATING = "Disputes: A dictator can only rule when in adjudication";
-    string private constant ERROR_NOT_SUBJECT = "Evidence: Only Subject can submit evidence";
-    string private constant ERROR_INVALID_RULING_OPTIONS = "Disputes: Too many options";
+    string private constant ERROR_NOT_RULED = "Disputes: This dispute hasn't been ruled or is already closed.";
+    string private constant ERROR_NOT_SUBJECT = "Evidence: Only arbitrable can submit evidence";
+    string private constant ERROR_INVALID_RULING_OPTIONS = "Disputes: Can only be binary";
 
     uint8 internal constant MIN_RULING_OPTIONS = 2;
     uint8 internal constant MAX_RULING_OPTIONS = MIN_RULING_OPTIONS;
@@ -70,8 +71,22 @@ contract CentralizedResolver is IArbitrator {
       Dispute storage dispute = disputes[_disputeId];
       require(dispute.state == DisputeState.Adjudicating, ERROR_NOT_ADJUDICATING);
       dispute.finalRuling = _finalRuling;
+      // Transitions into the Severing state, to avoid ruling a dispute more than once.
+      // A ruling is then finalized once the arbitrable calls rule()
       dispute.state = DisputeState.Severing;
+      console.log("Dictated dispute %s with ruling %s", _disputeId, _finalRuling);
       emit Dictated(_disputeId, _finalRuling);
+    }
+
+    /**
+    * @notice Check dispute stored with _disputeId
+    * @param _disputeId id of the dispute to check
+    * @return Dispute state
+    */
+    function checkDispute(uint256 _disputeId) external view returns (address, uint8, uint8, DisputeState) {
+      Dispute storage dispute = disputes[_disputeId];
+
+      return (dispute.subject, dispute.possibleRulings, dispute.finalRuling, dispute.state);
     }
 
 
@@ -86,14 +101,15 @@ contract CentralizedResolver is IArbitrator {
     function createDispute(uint256 _possibleRulings, bytes calldata _metadata) override external returns (uint256) {
       require(_possibleRulings >= MIN_RULING_OPTIONS && _possibleRulings <= MAX_RULING_OPTIONS, ERROR_INVALID_RULING_OPTIONS);
       // Create dispute
+      Dispute memory dispute = Dispute(
+        msg.sender,
+        uint8(_possibleRulings),
+        0,
+        DisputeState.PreEvidence
+      );
       uint256 disputeId = disputes.length;
-      disputeId++;
-      Dispute storage dispute = disputes[disputeId];
-      // As the dispute will always be created by the queue, we can use msg.sender
-      dispute.subject = msg.sender;
-      dispute.possibleRulings = uint8(_possibleRulings);
-      dispute.state = DisputeState.PreEvidence;
-
+      disputes.push(dispute);
+      console.log("Created new dispute", disputeId);
       emit NewDispute(disputeId, msg.sender, _metadata);
 
       return disputeId;
@@ -126,7 +142,7 @@ contract CentralizedResolver is IArbitrator {
     }
 
     /**
-    * @notice Rule dispute #`_disputeId` if ready
+    * @notice Close ruling of dispute #`_disputeId` if a final ruling has been given.
     * @param _disputeId Identification number of the dispute to be ruled
     * @return subject Subject associated to the dispute
     * @return ruling Ruling number computed for the given dispute
@@ -134,6 +150,11 @@ contract CentralizedResolver is IArbitrator {
     function rule(uint256 _disputeId) override external returns (address subject, uint256 ruling) {
       Dispute storage dispute = disputes[_disputeId];
       require(msg.sender == dispute.subject, ERROR_NOT_SUBJECT);
+      require(dispute.state == DisputeState.Severing, ERROR_NOT_RULED);
+      // Transition into ruled state, effectively locking the dispute.
+      dispute.state = DisputeState.Ruled;
+      console.log("Closed dispute %s with ruling %s", _disputeId, dispute.finalRuling);
+      emit Ruled(_disputeId, dispute.finalRuling);
 
       return (dispute.subject, dispute.finalRuling);
     }
@@ -145,7 +166,7 @@ contract CentralizedResolver is IArbitrator {
     * @return feeAmount Total amount of fees that must be allowed to the recipient
     */
     function getDisputeFees() override external view returns (address recipient, IERC20 feeToken, uint256 feeAmount) {
-      return (dictator, dictatorConfig.feeToken, dictatorConfig.feeAmount);
+      return (address(dictator), dictatorConfig.feeToken, dictatorConfig.feeAmount);
     }
 
     /**
