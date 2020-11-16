@@ -120,6 +120,8 @@ describe('CentralizedResolver', function() {
       .withArgs(0, 4)
   })
 
+  // Sad paths :( (Expected behavior)
+
   it('Fails to create the dispute due to invalid amount of rulings', async () => {
     await expect(
       centralizedResolver.createDispute(4n, '0x')
