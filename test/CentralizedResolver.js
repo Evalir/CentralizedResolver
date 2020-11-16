@@ -4,6 +4,8 @@ const { solidity } = require('@nomiclabs/hardhat-waffle')
 describe('CentralizedResolver', function() {
   let signers, owner, centralizedResolver
   const NO_TOKEN = `${'0x'.padEnd(42, '0')}`
+  const ALLOW_RULING = 4
+  const ALLOW_RULING_BN = 4n
 
   before(async () => {
     signers = await ethers.getSigners()
@@ -100,9 +102,9 @@ describe('CentralizedResolver', function() {
     await expect(centralizedResolver.closeEvidencePeriod(0n))
       .to.emit(centralizedResolver, 'EvidencePeriodClosed')
       .withArgs(0)
-    await expect(centralizedResolver.dictate(0n, 4n))
+    await expect(centralizedResolver.dictate(0n, ALLOW_RULING_BN))
       .to.emit(centralizedResolver, 'Dictated')
-      .withArgs(0, 4)
+      .withArgs(0, ALLOW_RULING)
   })
 
   it('Creates a dispute correctly, closes the evidence period, rules it, and finalizes it', async () => {
@@ -112,12 +114,12 @@ describe('CentralizedResolver', function() {
     await expect(centralizedResolver.closeEvidencePeriod(0n))
       .to.emit(centralizedResolver, 'EvidencePeriodClosed')
       .withArgs(0)
-    await expect(centralizedResolver.dictate(0n, 4n))
+    await expect(centralizedResolver.dictate(0n, ALLOW_RULING_BN))
       .to.emit(centralizedResolver, 'Dictated')
-      .withArgs(0, 4)
+      .withArgs(0, ALLOW_RULING)
     await expect(centralizedResolver.rule(0n))
       .to.emit(centralizedResolver, 'Ruled')
-      .withArgs(0, 4)
+      .withArgs(0, ALLOW_RULING)
   })
 
   // Sad paths :( (Expected behavior)
@@ -170,9 +172,9 @@ describe('CentralizedResolver', function() {
     await expect(centralizedResolver.closeEvidencePeriod(0n))
       .to.emit(centralizedResolver, 'EvidencePeriodClosed')
       .withArgs(0)
-    await expect(centralizedResolver.dictate(0n, 4n))
+    await expect(centralizedResolver.dictate(0n, ALLOW_RULING_BN))
       .to.emit(centralizedResolver, 'Dictated')
-      .withArgs(0, 4)
+      .withArgs(0, ALLOW_RULING)
   })
 
   it('Creates a dispute correctly, dictates a ruling over it, and fails to do it again', async () => {
@@ -182,10 +184,10 @@ describe('CentralizedResolver', function() {
     await expect(centralizedResolver.closeEvidencePeriod(0n))
       .to.emit(centralizedResolver, 'EvidencePeriodClosed')
       .withArgs(0)
-    await expect(centralizedResolver.dictate(0n, 4n))
+    await expect(centralizedResolver.dictate(0n, ALLOW_RULING_BN))
       .to.emit(centralizedResolver, 'Dictated')
-      .withArgs(0, 4)
-    await expect(centralizedResolver.dictate(0n, 4n)).to.be.revertedWith(
+      .withArgs(0, ALLOW_RULING)
+    await expect(centralizedResolver.dictate(0n, ALLOW_RULING_BN)).to.be.revertedWith(
       "Disputes: A dictator can only rule when in adjudication"
     )
   })
